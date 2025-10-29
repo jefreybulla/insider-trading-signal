@@ -32,7 +32,7 @@ python3 -m venv insider-trading-signal
 ### Run in Jupyter
 - Use Python environment with
 ```
-source insider-trading-signal
+source insider-trading-signal/bin/activate
 ```
 - Update pip
 ```
