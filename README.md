@@ -13,9 +13,7 @@ Given an insider buy or sell (Form 4 SEC), predict whether the stock’s price w
 ## Model target
 Class = 1 (Up) if forward return > 0; Class = 0 (Down) otherwise. 
 
-Target will be adjusted againts market performance (S&P500).
-
-
+Target will be adjusted againts market performance (S&P500) between t and t+63.
 
 ## Project setup 
 ## Create Python environment
