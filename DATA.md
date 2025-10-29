@@ -45,6 +45,7 @@ TRANS_PRICEPERSHARE is used to determine dollar_value
 
 | Field Name            | Description                                                             |      Data Type | Nullable | Key |
 | --------------------- | ----------------------------------------------------------------------- | -------------: | :------: | :-: |
+| SECURITY_TITLE | Security title | VARCHAR2 (60) | No | |
 | TRANS_DATE | Transaction date in (DD-MON-YYYY) format. | DATE |    No    |     |
 | TRANS_SHARES | Transaction shares reported when Securities Acquired (A) or Disposed of (D). | NUMBER(16,2) | Yes  |     |
 | TRANS_PRICEPERSHARE | Price of non-Derivative Transaction Security. | NUMBER(16,2) | YES |     |
