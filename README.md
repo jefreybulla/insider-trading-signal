@@ -14,3 +14,33 @@ Given an insider buy or sell (Form 4 SEC), predict whether the stock’s price w
 Class = 1 (Up) if forward return > 0; Class = 0 (Down) otherwise. 
 
 Target will be adjusted againts market performance (S&P500).
+
+
+
+## Project setup 
+## Create Python environment
+- Install python 3 if needed.
+- Create environment with 
+```
+python3 -m venv insider-trading-signal
+```
+
+### Run in VS code
+- Open project in VS code
+- In the UI, pick the kernel: insider-trading-signal
+
+### Run in Jupyter
+- Use Python environment with
+```
+source insider-trading-signal
+```
+- Update pip
+```
+pip install --upgrade pip
+```
+- Open Jupyter notebooks
+- Exit Python environment with
+```
+deactivate
+```
+
