@@ -1,6 +1,6 @@
 # Data mapping
 
-Given the SEC insiders data, ese this info to find the relevant data for this project. Source: `FORM_345_readme.htm` 
+Given the SEC insiders data, use the following information to find the relevant data for this project. You can find more details on the SEC dataset in `FORM_345_readme.htm` (from the SEC zip folder, not in this repo)
 
 ## Model features
 - reporting_owner: OFFICER, DIRECTOR, TENPERCENTOWNER, OTHER
