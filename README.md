@@ -1,4 +1,4 @@
-# insider-trading-signal
+# Insider trading signal classifier
 Given an insider buy or sell (Form 4 SEC), predict whether the stock’s price will be up or down ~1 quarter later (return over the next 63 trading days).
 
 ## Model features
