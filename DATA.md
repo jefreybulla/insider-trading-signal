@@ -20,7 +20,7 @@ In order to train our model we need to determine the price of the stock 63 tradi
 
 ## Date we need from the SEC dataset
 
-## SUBMISSION.tsv
+### SUBMISSION.tsv
 
 AFF10B5ONE maps to is_10b5_1
 
