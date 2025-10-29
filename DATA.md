@@ -9,8 +9,6 @@ Given the SEC insiders data, ese this info to find the relevant data for this pr
 - size_vs_cap = dollar_value / market_cap_t-1
 - is_10b5_1 = 0 or 1 (0 = open-market/discretionary, 1 = 10b5_1 plan)
 
-10b5_1 is a pre-arranged trading plan. These purchases are often often less informative than open-market (discretionary) trades.
-
 ### Computing side
 - Use NONDERIV_TRANS file
 - In SECURITY_TITLE find "COMMON" stock transactions
