@@ -13,6 +13,9 @@ git add .
 git commit -m "<commit-name-usually-an-action>"
 ```
 - Push branch to GitHub
+```
+git push origin <branch-name-here>
+```
 - On GitHub.com click on "Create a new Pull Request"
 - Open a new Pull Request from your new branch against then main branch
 
