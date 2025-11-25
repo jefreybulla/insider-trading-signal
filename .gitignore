@@ -9,3 +9,10 @@ insider-trading-signal
 *:Zone.Identifier
 .DS_Store
 
+# Secrets
+.env
+
+# Cache files
+.cache
+*.pyc
+

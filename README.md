@@ -47,3 +47,7 @@ deactivate
 pip install pyarrow
 ```
 
+## Data fetching
+```
+pip install yfinance requests-cache pandas_market_calendars
+```
