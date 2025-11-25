@@ -42,3 +42,8 @@ pip install --upgrade pip
 deactivate
 ```
 
+## Using parquets
+```
+pip install pyarrow
+```
+
