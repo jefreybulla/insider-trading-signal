@@ -10,7 +10,7 @@
 # - Transaction dates and time trends
 # - Shares, price per share, and dollar-value distributions
 
-# In[2]:
+# In[460]:
 
 
 import pandas as pd
@@ -40,12 +40,12 @@ plt.rcParams['figure.figsize'] = (12, 6)
 # 
 # If the file path is different on your system, update `NONDERIV_PATH` accordingly.
 
-# In[3]:
+# In[461]:
 
 
-NONDERIV_PATH = r"/Users/aaniaadap/Desktop/KDDM Project/Dataset/NONDERIV_TRANS.tsv"  # <-- update this
+NONDERIV_PATH = r"../NONDERIV_TRANS.tsv"  # <-- update this
 
-nonderiv_cols = ['SECURITY_TITLE', 'TRANS_DATE', 'TRANS_SHARES',
+nonderiv_cols = ['ACCESSION_NUMBER', 'SECURITY_TITLE', 'TRANS_DATE', 'TRANS_SHARES',
                  'TRANS_PRICEPERSHARE', 'TRANS_CODE']
 
 df_nonderiv = pd.read_csv(NONDERIV_PATH, sep='\t', usecols=nonderiv_cols, low_memory=False)
@@ -55,14 +55,14 @@ df_nonderiv.head()
 # ## Basic information and missing values
 # We check the **shape**, **data types**, and **missing values** to understand data quality before applying any filters.
 
-# In[4]:
+# In[462]:
 
 
 print('Shape:', df_nonderiv.shape)
 df_nonderiv.dtypes
 
 
-# In[5]:
+# In[463]:
 
 
 missing = df_nonderiv.isnull().sum()
@@ -78,7 +78,7 @@ missing_df
 # 
 # This focuses the analysis on standard insider buy/sell transactions in common stock.
 
-# In[6]:
+# In[464]:
 
 
 df_filtered = df_nonderiv[
@@ -95,7 +95,7 @@ df_filtered['TRANS_CODE'].value_counts()
 # ## 4. Transaction date analysis
 # We convert `TRANS_DATE` to datetime and derive **year** and **year-month** fields to study temporal patterns.
 
-# In[7]:
+# In[465]:
 
 
 df_filtered['TRANS_DATE'] = pd.to_datetime(df_filtered['TRANS_DATE'], errors='coerce')
@@ -108,7 +108,7 @@ transactions_by_year = df_filtered['year'].value_counts().sort_index()
 transactions_by_year
 
 
-# In[8]:
+# In[466]:
 
 
 plt.figure()
@@ -127,7 +127,7 @@ plt.show()
 # - `dollar_value = TRANS_SHARES × TRANS_PRICEPERSHARE`
 # including summary statistics and selected percentiles.
 
-# In[9]:
+# In[467]:
 
 
 numeric_cols = ['TRANS_SHARES', 'TRANS_PRICEPERSHARE']
@@ -140,7 +140,7 @@ stats = df_filtered[['TRANS_SHARES', 'TRANS_PRICEPERSHARE', 'dollar_value']].des
 stats
 
 
-# In[10]:
+# In[468]:
 
 
 percentiles = [10, 25, 50, 75, 90, 95, 99]
@@ -149,17 +149,148 @@ dv = df_filtered['dollar_value'].dropna()
 pd.DataFrame({f'{p}th': [dv.quantile(p/100)] for p in percentiles})
 
 
+# In[469]:
+
+
+# Drop rows with transaction with no value
+df_filtered = df_filtered[df_filtered['TRANS_SHARES'] > 0]
+print('Records after filtering:', len(df_filtered))
+df_filtered = df_filtered[df_filtered['TRANS_PRICEPERSHARE'] > 0]
+print('Records after filtering:', len(df_filtered))
+
+# Recompiled dollar value
+df_filtered['dollar_value'] = df_filtered['TRANS_SHARES'] * df_filtered['TRANS_PRICEPERSHARE']
+
+stats = df_filtered[['TRANS_SHARES', 'TRANS_PRICEPERSHARE', 'dollar_value']].describe()
+stats
+
+
+# Let's remove the rows with transaction dates that did not happen in year 2025
+
+# In[470]:
+
+
+df_filtered = df_filtered[df_filtered['year'] == 2025]
+print('Records after filtering for 2025 only:', len(df_filtered))
+
+
+# ## Multiple transactions per submision 
+
+# In[471]:
+
+
+df_filtered.head()
+
+
+# In[472]:
+
+
+# Let's check how many rows have unique ACCESSION_NUMBER
+print('Number of unique ACCESSION_NUMBER:', df_filtered['ACCESSION_NUMBER'].nunique())
+
+
+# We have that about half of the transaction have unique ids. We now know that is common to have multiple transaction for one SEC submision
+
+# In[473]:
+
+
+# Group by ACCESSION_NUMBER and calculate the time span for each
+grouped_dates = df_filtered.groupby('ACCESSION_NUMBER')['TRANS_DATE']
+time_windows = grouped_dates.max() - grouped_dates.min()
+
+# Find the largest time window
+largest_window = time_windows.max()
+print(f'Largest time window between transactions for the same ACCESSION_NUMBER: {largest_window}')
+
+# Find the ACCESSION_NUMBER with the largest time window
+accession_with_largest_window = time_windows.idxmax()
+print(f'ACCESSION_NUMBER with largest time window: {accession_with_largest_window}')
+
+# Show all rows for that ACCESSION_NUMBER
+rows_for_largest = df_filtered[df_filtered['ACCESSION_NUMBER'] == accession_with_largest_window]
+rows_for_largest
+
+
+# In[474]:
+
+
+# Group by ACCESSION_NUMBER and count unique TRANS_CODE
+grouped_codes = df_filtered.groupby('ACCESSION_NUMBER')['TRANS_CODE'].nunique()
+conflicting_accessions = grouped_codes[grouped_codes > 1]
+
+print(f'Number of ACCESSION_NUMBER with conflicting TRANS_CODE: {len(conflicting_accessions)}')
+
+if len(conflicting_accessions) > 0:
+    print('Examples of conflicting ACCESSION_NUMBER:')
+    for acc in conflicting_accessions.index[:5]:  # Show first 5 examples
+        print(f'\nACCESSION_NUMBER: {acc}')
+        print(df_filtered[df_filtered['ACCESSION_NUMBER'] == acc][['TRANS_CODE', 'TRANS_DATE']].sort_values('TRANS_DATE'))
+else:
+    print('No conflicting TRANS_CODE found.')
+
+
+# A small number of rows with same ACCESSION_NUMBER have conflicting TRANS_CODE. Let's drop those rows
+
+# In[475]:
+
+
+# Drop rows with conflicting TRANS_CODE
+df_filtered = df_filtered[~df_filtered['ACCESSION_NUMBER'].isin(conflicting_accessions.index)]
+print('Records after dropping conflicting TRANS_CODE:', len(df_filtered))
+
+
+# Let's combine the transactions that are part of the same submision (same ACCESSION_NUMBER)
+
+# In[476]:
+
+
+# Sort by ACCESSION_NUMBER and TRANS_DATE
+df_filtered = df_filtered.sort_values(['ACCESSION_NUMBER', 'TRANS_DATE'])
+
+# Group by ACCESSION_NUMBER and aggregate
+df_combined = df_filtered.groupby('ACCESSION_NUMBER').agg({
+    'SECURITY_TITLE': 'last',
+    'TRANS_CODE': 'last',
+    'TRANS_SHARES': 'sum',
+    'TRANS_PRICEPERSHARE': lambda x: (df_filtered.loc[x.index, 'dollar_value'].sum() / 
+                                       df_filtered.loc[x.index, 'TRANS_SHARES'].sum()) 
+                                      if df_filtered.loc[x.index, 'TRANS_SHARES'].sum() > 0 else 0,
+    'dollar_value': 'sum',
+    'year': 'last',
+    'year_month': 'last',
+    'TRANS_DATE': 'last'
+}).reset_index()
+
+print('Shape after combining:', df_combined.shape)
+df_combined.head()
+
+
+# In[477]:
+
+
+# Show combined row for the ACCESSION_NUMBER =  0000947871-25-000303
+rows_for_largest = df_combined[df_combined['ACCESSION_NUMBER'] == accession_with_largest_window]
+rows_for_largest
+
+
+# In[478]:
+
+
+stats = df_combined[['TRANS_SHARES', 'TRANS_PRICEPERSHARE', 'dollar_value']].describe()
+stats
+
+
 # ## 6. Visualizations
 # Below we plot:
 # - Buy vs Sell transaction counts
 # - Distribution of dollar values (log scale to handle skew)
 # These plots help visually confirm patterns seen in the summary statistics.
 
-# In[11]:
+# In[489]:
 
 
 plt.figure()
-df_filtered['TRANS_CODE'].value_counts().plot(kind='bar')
+df_combined['TRANS_CODE'].value_counts().plot(kind='bar')
 plt.title('Buy (P) vs Sell (S) Transactions')
 plt.xlabel('TRANS_CODE')
 plt.ylabel('Count')
@@ -167,7 +298,8 @@ plt.tight_layout()
 plt.show()
 
 plt.figure()
-dv_log = np.log10(df_filtered['dollar_value'].dropna() + 1)
+dv_log = np.log10(df_combined['dollar_value'].dropna() + 1)    # log base 20
+#dv_log = np.log1p(df_combined['dollar_value'].dropna() + 1)     # natural log
 dv_log.plot(kind='hist', bins=50)
 plt.title('Distribution of Dollar Value (log10 scale)')
 plt.xlabel('log10(dollar_value + 1)')
@@ -178,12 +310,12 @@ plt.show()
 
 # ##  Monthly trends: counts, dollar value, buy/sell ratio
 
-# In[12]:
+# In[490]:
 
 
 # Aggregate by month
 monthly = (
-    df_filtered
+    df_combined
     .groupby('year_month')
     .agg(
         n_trades=('TRANS_CODE', 'count'),
@@ -198,7 +330,7 @@ monthly['buy_sell_ratio'] = monthly['buys'] / monthly['sells'].replace(0, np.nan
 monthly.tail()
 
 
-# In[13]:
+# In[481]:
 
 
 # Plot: trades per month
@@ -237,11 +369,11 @@ plt.show()
 
 # ## Compare buy vs sell behaviour (size, price, dollar value)
 
-# In[15]:
+# In[491]:
 
 
 buy_sell_summary = (
-    df_filtered
+    df_combined
     .groupby('TRANS_CODE')
     .agg(
         n_trades=('dollar_value', 'count'),
@@ -257,7 +389,7 @@ buy_sell_summary = (
 buy_sell_summary
 
 
-# In[16]:
+# In[483]:
 
 
 # Visual: distribution of log-dollar value by P vs S
@@ -276,19 +408,19 @@ plt.show()
 
 # ## Flag and inspect large / extreme trades (outliers)
 
-# In[17]:
+# In[492]:
 
 
 # Define threshold as 99th percentile of dollar_value
-threshold_99 = df_filtered['dollar_value'].quantile(0.99)
+threshold_99 = df_combined['dollar_value'].quantile(0.99)
 
-large_trades = df_filtered[df_filtered['dollar_value'] >= threshold_99].copy()
+large_trades = df_combined[df_combined['dollar_value'] >= threshold_99].copy()
 large_trades_sorted = large_trades.sort_values('dollar_value', ascending=False)
 
 threshold_99, large_trades_sorted.head(20)
 
 
-# In[18]:
+# In[485]:
 
 
 # How many large trades are buys vs sells?
@@ -297,26 +429,26 @@ large_trades['TRANS_CODE'].value_counts(normalize=True)
 
 # ## Security-level view: which securities see most insider activity?
 
-# In[19]:
+# In[493]:
 
 
 group_cols = []
-if 'ISSUER_CIK' in df_filtered.columns:
+if 'ISSUER_CIK' in df_combined.columns:
     group_cols.append('ISSUER_CIK')
-if 'ISSUER_TRADING_SYMBOL' in df_filtered.columns:
+if 'ISSUER_TRADING_SYMBOL' in df_combined.columns:
     group_cols.append('ISSUER_TRADING_SYMBOL')
 
 # Always include security title as a fallback
 group_cols.append('SECURITY_TITLE')
 
 security_activity = (
-    df_filtered
+    df_combined
     .groupby(group_cols)
     .agg(
         n_trades=('dollar_value', 'count'),
         total_dollar_value=('dollar_value', 'sum'),
-        net_dollar_value=('dollar_value', lambda x: x[df_filtered.loc[x.index, 'TRANS_CODE'] == 'P'].sum()
-                                              - x[df_filtered.loc[x.index, 'TRANS_CODE'] == 'S'].sum())
+        net_dollar_value=('dollar_value', lambda x: x[df_combined.loc[x.index, 'TRANS_CODE'] == 'P'].sum()
+                                              - x[df_combined.loc[x.index, 'TRANS_CODE'] == 'S'].sum())
     )
     .sort_values('total_dollar_value', ascending=False)
 )
@@ -328,7 +460,7 @@ security_activity.head(20)
 
 # # Stability and anomaly: month-over-month changes
 
-# In[20]:
+# In[494]:
 
 
 monthly_changes = monthly[['n_trades', 'total_dollar_value']].copy()
@@ -338,7 +470,7 @@ monthly_changes['dollar_value_change_pct'] = monthly_changes['total_dollar_value
 monthly_changes.tail()
 
 
-# In[21]:
+# In[495]:
 
 
 plt.figure()

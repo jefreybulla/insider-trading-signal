@@ -10,7 +10,7 @@
 # - Group roles into simplified categories (e.g., Officer, Director, 10% Owner)
 # - Visualize the composition of reporting owners
 
-# In[2]:
+# In[69]:
 
 
 import pandas as pd
@@ -29,26 +29,26 @@ plt.rcParams['figure.figsize'] = (12, 6)
 # ## 1. Load data
 # Update `REPORTINGOWNER_PATH` as needed for your environment.
 
-# In[3]:
+# In[70]:
 
 
-REPORTINGOWNER_PATH = r"/Users/aaniaadap/Desktop/KDDM Project/Dataset/REPORTINGOWNER.tsv"  # <-- update this
+REPORTINGOWNER_PATH = r"../REPORTINGOWNER.tsv"  # <-- update this
 
 df_owner = pd.read_csv(REPORTINGOWNER_PATH, sep='\t', low_memory=False)
-df_owner.head()
+df_owner.head(15)
 
 
 # ## 2. Basic info and missing values
 # We first examine the shape, data types, and missing values to assess data quality.
 
-# In[4]:
+# In[71]:
 
 
 print('Shape:', df_owner.shape)
 df_owner.dtypes
 
 
-# In[5]:
+# In[72]:
 
 
 missing = df_owner.isnull().sum()
@@ -59,7 +59,7 @@ pd.DataFrame({'Missing Count': missing, 'Missing %': missing_pct})
 # ## Relationship type distribution
 # We look at `RPTOWNER_RELATIONSHIP` to understand what kinds of roles are most common among reporting owners.
 
-# In[6]:
+# In[73]:
 
 
 rel_col = 'RPTOWNER_RELATIONSHIP'
@@ -77,7 +77,7 @@ relationship_counts.head(20)
 # 
 # This helps interpret the mix of insider types.
 
-# In[16]:
+# In[74]:
 
 
 def categorize_role(rel: str) -> str:
@@ -113,7 +113,7 @@ simplified_counts
 # even when multiple roles are combined in one field.
 # 
 
-# In[17]:
+# In[75]:
 
 
 # Ensure relationship column is string and uppercased
@@ -132,7 +132,7 @@ role_counts = roles_exploded['role_list'].value_counts().head(20)
 role_counts
 
 
-# In[11]:
+# In[76]:
 
 
 plt.figure()
@@ -150,7 +150,7 @@ plt.show()
 # - Top relationship types
 # - Distribution of simplified role categories
 
-# In[8]:
+# In[77]:
 
 
 plt.figure()
@@ -170,4 +170,52 @@ plt.ylabel('Count')
 plt.xticks(rotation=45)
 plt.tight_layout()
 plt.show()
+
+
+# ## Handling multiple entries per subimission and simplifying RPTOWNER_RELATIONSHIP
+
+# In[78]:
+
+
+print('Number of unique ACCESSION_NUMBER in df_owner:', df_owner['ACCESSION_NUMBER'].nunique())
+print(f'Total rows {len(df_owner)}')
+
+
+# There are a few thosand rows with non-unique ids. Let's merge them. 
+# We will also simplify the RPTOWNER_RELATIONSHIP to have only four possible values
+
+# In[79]:
+
+
+def get_simplified_role(rel):
+    if not isinstance(rel, str):
+        return 'OTHER'
+    r = rel.upper()
+    if 'OFFICER' in r:
+        return 'OFFICER'
+    elif 'DIRECTOR' in r:
+        return 'DIRECTOR'
+    elif 'TENPERCENTOWNER' in r or '10% OWNER' in r:
+        return 'TENPERCENTOWNER'
+    else:
+        return 'OTHER'
+
+# Apply simplification
+df_owner['simplified'] = df_owner['RPTOWNER_RELATIONSHIP'].apply(get_simplified_role)
+
+# Assign sort key for precedence: OFFICER > DIRECTOR > TENPERCENTOWNER > OTHER
+sort_order = {'OFFICER': 1, 'DIRECTOR': 2, 'TENPERCENTOWNER': 3, 'OTHER': 4}
+df_owner['sort_key'] = df_owner['simplified'].map(sort_order)
+
+# Sort by ACCESSION_NUMBER and sort_key, then drop duplicates keeping the first (highest precedence)
+df_owner = df_owner.sort_values(['ACCESSION_NUMBER', 'sort_key']).drop_duplicates('ACCESSION_NUMBER', keep='first')
+
+# Update the column and drop temp columns
+df_owner['RPTOWNER_RELATIONSHIP'] = df_owner['simplified']
+df_owner = df_owner.drop(columns=['simplified', 'sort_key'])
+
+print('Shape after merging and simplifying:', df_owner.shape)
+print('Updated unique RPTOWNER_RELATIONSHIP values:')
+print(df_owner['RPTOWNER_RELATIONSHIP'].value_counts())
+df_owner.head()
 
