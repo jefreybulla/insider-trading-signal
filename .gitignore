@@ -1,8 +1,18 @@
+# Python environments
 insider-trading-signal-env
+insider-trading-signal
+
+# Notebook temp files
 .ipynb_checkpoints
+
 # Windows and Mac metadata files
 *:Zone.Identifier
 .DS_Store
 
+# Secrets
+.env
 
+# Cache files
+.cache
+*.pyc
 

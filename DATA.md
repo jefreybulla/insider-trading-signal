@@ -27,6 +27,7 @@ AFF10B5ONE maps to is_10b5_1
 | Field Name            | Description                                                             |      Data Type | Nullable | Key |
 | --------------------- | ----------------------------------------------------------------------- | -------------: | :------: | :-: |
 | AFF10B5ONE | The transaction was made pursuant to a contract, instruction or written plan for the purchase or sale of equity securities of the issuer that is intended to satisfy the affirmative defense conditions of Rule 10b5-1(c). | VARCHAR2 (25) | Yes | |
+| ISSUERTRADINGSYMBOL| Issuer trading symbol. | VARCHAR2 (10) | No | |
 
 ### REPORTINGOWNER.tsv
 

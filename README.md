@@ -20,7 +20,7 @@ Target will be adjusted againts market performance (S&P500) between t and t+63.
 - Install python 3 if needed.
 - Create environment with 
 ```
-python3 -m venv insider-trading-signal
+python3 -m venv insider-trading-signal-env
 ```
 
 ### Run in VS code
@@ -30,7 +30,7 @@ python3 -m venv insider-trading-signal
 ### Run in Jupyter
 - Use Python environment with
 ```
-source insider-trading-signal/bin/activate
+source insider-trading-signal-env/bin/activate
 ```
 - Update pip
 ```
@@ -42,3 +42,12 @@ pip install --upgrade pip
 deactivate
 ```
 
+## Using parquets
+```
+pip install pyarrow
+```
+
+## Data fetching
+```
+pip install yfinance requests-cache pandas_market_calendars
+```
