@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[122]:
+# In[28]:
 
 
 # notebooks/02_build_labels.ipynb (conceptual cells)
@@ -18,11 +18,12 @@ import numpy as np
 
 
 
+# events_2025Q1.parquet is the jopined data obtained after mergest relevant data from Transactions, Submissions and Report Owner
 events = pd.read_parquet("data/raw/events_2025Q1.parquet")  
 events.head()
 
 
-# In[123]:
+# In[29]:
 
 
 tickers = ['^GSPC'] + sorted(events["ticker"].unique())
@@ -35,7 +36,7 @@ print(f"start={start}, end={end}")
 
 # ## Fetch stock prices
 
-# In[124]:
+# In[30]:
 
 
 #start = '2025-01-01'
@@ -44,11 +45,12 @@ print(f"start={start}, end={end}")
 #px = download_adj_close(tickers, start, end)
 
 
-# In[125]:
+# In[31]:
 
 
 # Data fetch happened on 11-24-2025. Number of columns with any NaN: 1189 out of 2374
 # px.to_parquet("data/engineered/price_data_2025Q1.parquet") 
+# price_data_2025Q1.parquet stores the fetched stock market data
 px = pd.read_parquet("data/engineered/price_data_2025Q1.parquet")  
 print(f"px shape: {px.shape}")
 print(f"Number of columns with any NaN: {px.isnull().any().sum()}")
@@ -58,7 +60,7 @@ px = px.dropna(axis=1, how='any')
 print(f"px shape after dropping columns with NaN: {px.shape}")
 
 
-# In[126]:
+# In[32]:
 
 
 td = nyse_days(start, end)
@@ -70,7 +72,7 @@ events["forward_ret_63"] = events["P_t_plus_63"]/events["P_t"] - 1
 events["label_up"] = (events["forward_ret_63"] > 0).astype(int)
 
 
-# In[127]:
+# In[33]:
 
 
 events.head()
@@ -78,7 +80,7 @@ events.head()
 
 # ## Add market benchmark with S&P500
 
-# In[128]:
+# In[34]:
 
 
 # Add SP500 (^GSPC) forward returns to events
@@ -117,13 +119,13 @@ print("Added SP500 columns:")
 print(events[['date', 'SP500_t', 'SP500_t_plus_63', 'forward_ret_SP500']].head())
 
 
-# In[129]:
+# In[35]:
 
 
 events.head()
 
 
-# In[130]:
+# In[36]:
 
 
 # Add label_up_market: 1 if stock outperforms SP500, 0 otherwise
@@ -135,13 +137,13 @@ print(f"\nLabel distribution:")
 print(events['label_up_market'].value_counts())
 
 
-# In[131]:
+# In[37]:
 
 
 events.head(10)
 
 
-# In[132]:
+# In[38]:
 
 
 print(len(events))
@@ -149,15 +151,15 @@ print(len(events))
 
 # ## Fetch Market Cap
 
-# In[133]:
+# In[39]:
 
 
 # Get all tickers from px (excluding the index)
 tickers_list = px.columns.tolist()
-print(f"Fetching market caps for {len(tickers_list)} tickers...")
+#print(f"Fetching market caps for {len(tickers_list)} tickers...")
 
 
-# In[134]:
+# In[40]:
 
 
 # Fetch market caps from API
@@ -167,22 +169,15 @@ print(f"Fetching market caps for {len(tickers_list)} tickers...")
 #market_cap_df = pd.DataFrame(list(market_caps.items()), columns=['ticker', 'market_cap'])
 
 
-# In[135]:
-
-
-market_cap_df = pd.read_parquet("data/engineered/market_cap_data_2025Q1.parquet")  
-
-
-# In[136]:
+# In[41]:
 
 
 # Convert to DataFrame for easier viewing
+#print(f"\nMarket caps fetched: {len(market_cap_df[market_cap_df['market_cap'].notna()])} with data, {len(market_cap_df[market_cap_df['market_cap'].isna()])} missing")
+#print("\nSample market caps:")
+#print(market_cap_df.head(10))
 
-print(f"\nMarket caps fetched: {len(market_cap_df[market_cap_df['market_cap'].notna()])} with data, {len(market_cap_df[market_cap_df['market_cap'].isna()])} missing")
-print("\nSample market caps:")
-print(market_cap_df.head(10))
-
-market_cap_df.to_parquet("data/engineered/market_cap_data_2025Q1.parquet")   
+#market_cap_df.to_parquet("data/engineered/market_cap_data_2025Q1.parquet")   
 
 # Create a mapping for events
 #market_cap_map = market_caps
@@ -190,13 +185,20 @@ market_cap_df.to_parquet("data/engineered/market_cap_data_2025Q1.parquet")
 
 
 
-# In[137]:
+# In[42]:
+
+
+# market_cap_data_2025Q1.parquet stores the market cap data fetched from APIs
+market_cap_df = pd.read_parquet("data/engineered/market_cap_data_2025Q1.parquet")  
+
+
+# In[43]:
 
 
 print(f"px shape: {market_cap_df.shape}")
 
 
-# In[138]:
+# In[44]:
 
 
 # Create a mapping of ticker to market cap
@@ -216,13 +218,13 @@ print(f"Summary statistics for size_vs_cap:")
 print(events['size_vs_cap'].describe())
 
 
-# In[139]:
+# In[45]:
 
 
 events.head()
 
 
-# In[140]:
+# In[46]:
 
 
 print("Total rows in events:", len(events))
@@ -231,7 +233,7 @@ print("\nNaN counts per column:")
 print(events.isnull().sum())
 
 
-# In[141]:
+# In[47]:
 
 
 # Drop rows with any NaN or missing values
@@ -242,7 +244,7 @@ print("Total rows after dropping NaN:", len(events))
 print("Rows with any missing or NaN values after drop:", events.isnull().any(axis=1).sum())
 
 
-# In[142]:
+# In[48]:
 
 
 # Add natural log of size_vs_cap column
@@ -250,25 +252,25 @@ events['log_size_vs_cap'] = np.log(events['size_vs_cap'])
 events.head()
 
 
-# In[143]:
+# In[49]:
 
 
 events = events.drop(columns=['ACCESSION_NUMBER', 'date', 'dollar_value', 'ticker', 'P_t', 'P_t_plus_63', 'forward_ret_63', 'label_up', 'SP500_t', 'SP500_t_plus_63', 'forward_ret_SP500', 'market_cap', 'size_vs_cap'  ])
 
 
-# In[144]:
+# In[50]:
 
 
 events.head(10)
 
 
-# In[145]:
+# In[51]:
 
 
 print(len(events))
 
 
-# In[146]:
+# In[52]:
 
 
 # Get current column order
@@ -289,14 +291,20 @@ print("New column order:")
 print(events.columns.tolist())
 
 
-# In[149]:
+# In[53]:
 
 
 events.head(10)
 
 
-# In[148]:
+# In[54]:
 
 
 print(len(events))
+
+
+# In[55]:
+
+
+events.to_parquet("data/engineered/final_data_2025Q1.parquet") 
 
