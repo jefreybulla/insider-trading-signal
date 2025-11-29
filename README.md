@@ -51,3 +51,21 @@ pip install pyarrow
 ```
 pip install yfinance requests-cache pandas_market_calendars
 ```
+
+## Using tensorflow
+As of November 2025 Tensorflow does not support Python 3.13. We need to use Python 3.11. 
+- Install Python 3.11
+```
+brew install python@3.11
+```
+- Confirm installation
+```
+python3.11 --version
+```
+- Create environment for Tensorflow
+```
+python3.11 -m venv tf-env
+source tf-env/bin/activate
+pip install --upgrade pip
+pip install tensorflow   # on Intel Mac
+# or: pip install tensorflow-macos   # on Apple silicon
