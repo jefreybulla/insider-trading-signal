@@ -17,4 +17,5 @@ tf-env
 .cache
 *.pyc
 
-/local
+/local_models
+/ETL_2024Q1
