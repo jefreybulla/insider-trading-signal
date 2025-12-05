@@ -10,19 +10,19 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.pipeline import Pipeline
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
 
 # # Model Execution
 
-# In[3]:
+# In[2]:
 
 
 # Load dataset
-df = pd.read_csv("final_data_2025Q1.csv")
+df = pd.read_parquet("../ETL/data/engineered/final_data_2025Q1.parquet")
 
 
-# In[4]:
+# In[3]:
 
 
 target = "label_up_market"
@@ -30,7 +30,7 @@ X = df.drop(columns=[target])
 y = df[target]
 
 
-# In[5]:
+# In[4]:
 
 
 # Categorical vs Numeric columns
@@ -38,7 +38,7 @@ cat_cols = ["side", "role"]
 num_cols = [c for c in X.columns if c not in cat_cols]
 
 
-# In[6]:
+# In[5]:
 
 
 # Preprocess: One-hot encode categoricals
@@ -48,7 +48,7 @@ preprocess = ColumnTransformer([
 remainder="passthrough")   # keep numeric columns as-is
 
 
-# In[7]:
+# In[6]:
 
 
 # C5.0-style tree (entropy split)
@@ -60,7 +60,7 @@ c50 = DecisionTreeClassifier(
 )
 
 
-# In[8]:
+# In[7]:
 
 
 pipe = Pipeline([
@@ -69,7 +69,7 @@ pipe = Pipeline([
 ])
 
 
-# In[9]:
+# In[8]:
 
 
 # Train-test split
@@ -81,25 +81,43 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 
-# In[10]:
+# In[9]:
 
 
 # Fit model
 pipe.fit(X_train, y_train)
 
 
+# In[10]:
+
+
+# Predictions
+y_train_pred = pipe.predict(X_train)
+y_test_pred = pipe.predict(X_test) 
+
+# ---- Accuracy ----
+train_accuracy = accuracy_score(y_train, y_train_pred)
+test_accuracy = accuracy_score(y_test, y_test_pred)
+
+print(f"Train Accuracy: {train_accuracy:.4f}")
+print(f"Test Accuracy:  {test_accuracy:.4f}")
+
+
 # In[11]:
 
 
-# Predict
-pred = pipe.predict(X_test)
+# ---- Confusion Matrix (Test) ----
+cm = confusion_matrix(y_test, y_test_pred)
+print("\nConfusion Matrix (Test):")
+print(cm)
 
 
 # In[12]:
 
 
-print("Accuracy:", accuracy_score(y_test, pred))
-print("\nClassification Report:\n", classification_report(y_test, pred))
+# ---- Classification Report (Test) ----
+print("\nClassification Report (Test):")
+print(classification_report(y_test, y_test_pred))
 
 
 # # **Model Interpretation & Inferences (C5.0 Decision Tree)**

@@ -11,7 +11,7 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
 
 # # Model Execution
@@ -19,7 +19,7 @@ from sklearn.metrics import accuracy_score, classification_report
 # In[2]:
 
 
-df = pd.read_parquet("final_data_2025Q1.parquet")
+df = pd.read_parquet("../ETL/data/engineered/final_data_2025Q1.parquet")
 
 
 # In[3]:
@@ -134,15 +134,57 @@ grid_search.fit(X_train, y_train)
 # In[14]:
 
 
+# Best model from GridSearchCV
 best_model = grid_search.best_estimator_
-y_pred = best_model.predict(X_test)
-
-test_accuracy = accuracy_score(y_test, y_pred)
 
 print("Best hyperparameters:", grid_search.best_params_)
-print(f"Test Accuracy: {test_accuracy:.4f}")
-print("\nClassification Report:")
-print(classification_report(y_test, y_pred))
+
+
+# In[15]:
+
+
+# Predictions
+y_train_pred = best_model.predict(X_train)
+y_test_pred = best_model.predict(X_test)
+
+# ---- Accuracy scores ----
+train_accuracy = accuracy_score(y_train, y_train_pred)
+test_accuracy = accuracy_score(y_test, y_test_pred)
+
+
+print(f"Train Accuracy: {train_accuracy:.4f}")
+print(f"Test Accuracy:  {test_accuracy:.4f}")
+
+
+# In[16]:
+
+
+# ---- Confusion matrix on test set ----
+cm = confusion_matrix(y_test, y_test_pred)
+print("\nConfusion Matrix (Test):")
+print(cm)
+
+
+# In[17]:
+
+
+# ---- Classification report on test set ----
+print("\nClassification Report (Test):")
+print(classification_report(y_test, y_test_pred))
+
+
+# In[18]:
+
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+plt.figure(figsize=(5,4))
+sns.heatmap(cm, annot=True, fmt="d")
+plt.xlabel("Predicted label")
+plt.ylabel("True label")
+plt.title("Confusion Matrix (Test Set)")
+plt.show()
 
 
 # # **Model Interpretation & Inferences (KNN Classification)**
