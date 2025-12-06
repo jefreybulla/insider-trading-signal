@@ -1,6 +1,7 @@
 # Python environments
 insider-trading-signal-env
 insider-trading-signal
+tf-env
 
 # Notebook temp files
 .ipynb_checkpoints
@@ -16,3 +17,5 @@ insider-trading-signal
 .cache
 *.pyc
 
+/local_models
+/ETL_2024Q1
